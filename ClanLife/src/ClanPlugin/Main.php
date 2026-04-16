@@ -7,6 +7,7 @@ namespace ClanPlugin;
 use pocketmine\plugin\PluginBase;
 use pocketmine\utils\Config;
 use ClanPlugin\database\Database;
+use ClanPlugin\database\MessagesDatabase;
 use ClanPlugin\clan\ClanManager;
 use ClanPlugin\command\ClanCommand;
 use ClanPlugin\forms\FormManager;
@@ -29,23 +30,21 @@ class Main extends PluginBase {
     public function onEnable(): void {
         $this->saveDefaultConfig();
         $this->database = new Database($this);
+        $this->messagesDb = new MessagesDatabase($this);
         $this->clanManager = new ClanManager($this);
         $this->formManager = new FormManager($this);
-        $this->messagesDb = new MessagesDatabase($this);
 
         $this->getServer()->getCommandMap()->register("clan", new ClanCommand($this));
-$this->getServer()->getCommandMap()->register("lftops", new ClanCommand($this));
+        $this->getServer()->getCommandMap()->register("lftops", new ClanCommand($this));
         $this->getServer()->getPluginManager()->registerEvents(new EventListener($this), $this);
         $this->floatingTextManager = new FloatingTextManager($this);
 
         $this->getLogger()->info("ClanPlugin habilitado!");
     }
-    public function getFloatingTextManager(): FloatingTextManager {
-        return $this->floatingTextManager;
-    }
 
     public function onDisable(): void {
         $this->database->close();
+        $this->messagesDb->close();
     }
 
     public static function getInstance(): Main {
@@ -55,7 +54,8 @@ $this->getServer()->getCommandMap()->register("lftops", new ClanCommand($this));
     public function getDatabase(): Database {
         return $this->database;
     }
-    public function getMessagesDatabase(): MessagesDatabase { 
+
+    public function getMessagesDatabase(): MessagesDatabase {
         return $this->messagesDb;
     }
 
@@ -65,5 +65,9 @@ $this->getServer()->getCommandMap()->register("lftops", new ClanCommand($this));
 
     public function getFormManager(): FormManager {
         return $this->formManager;
+    }
+
+    public function getFloatingTextManager(): FloatingTextManager {
+        return $this->floatingTextManager;
     }
 }
