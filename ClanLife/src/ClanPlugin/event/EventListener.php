@@ -8,16 +8,15 @@ use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerDeathEvent;
 use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\player\PlayerQuitEvent;
-use pocketmine\player\Player;
-use ClanPlugin\Main;
-
 use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\entity\object\ArmorStand;
-use ClanPlugin\event\LeaderboardItemListener; // se quiser manter separado, mas podemos usar direto
+use pocketmine\player\Player;
+use ClanPlugin\Main;
 
 class EventListener implements Listener {
-    // ... outras partes
+    private Main $plugin;
+
     public function __construct(Main $plugin) {
         $this->plugin = $plugin;
     }
@@ -48,9 +47,9 @@ class EventListener implements Listener {
         }
 
         // Interação com entidade leaderboard (texto flutuante)
-        $entity = $event->getEntity();
-        if ($entity !== null) {
-            $this->plugin->getFloatingTextManager()->onInteractWithLeaderboard($player, $entity);
+        $target = $event->getEntity();
+        if ($target !== null) {
+            $this->plugin->getFloatingTextManager()->onInteractWithLeaderboard($player, $target);
         }
     }
 
@@ -60,8 +59,6 @@ class EventListener implements Listener {
             $event->cancel();
         }
     }
-
-    
 
     public function onPlayerDeath(PlayerDeathEvent $event): void {
         $player = $event->getPlayer();
@@ -75,7 +72,6 @@ class EventListener implements Listener {
     }
 
     public function onPlayerJoin(PlayerJoinEvent $event): void {
-        // Check for pending invites and notify
         $player = $event->getPlayer();
         $invites = $this->plugin->getDatabase()->getInvitesForPlayer($player->getName());
         if (!empty($invites)) {
@@ -84,6 +80,6 @@ class EventListener implements Listener {
     }
 
     public function onPlayerQuit(PlayerQuitEvent $event): void {
-        // Nothing special for now
+        // Nenhuma ação especial por enquanto
     }
 }
