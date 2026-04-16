@@ -53,7 +53,7 @@ class ClanManager {
         if (!$clan->isLeader($player->getName())) {
             return false;
         }
-        $this->plugin->getMessagesDatabase()->deleteClanMessages($clan->getName())
+        $this->plugin->getMessagesDatabase()->deleteClanMessages($clan->getName());
         $clan->delete();
         unset($this->clans[$clan->getName()]);
         return true;
@@ -74,7 +74,7 @@ class ClanManager {
             return false;
         }
         $this->plugin->getDatabase()->addInvite($clan->getName(), $targetName, $inviter->getName());
-        $target->sendMessage("§aVocê foi convidado para o clã §e{$clan->getName()} §apor §e{$inviter->getName()}§a. Use /clan accept {$clan->getName()} para aceitar.");
+        $target->sendMessage("§aVocê foi convidado para o clã §e{$clan->getName()} §apor §e{$inviter->getName()}§a. Use /clan para aceitar.");
         $this->plugin->getDatabase()->addNotification($targetName, "clan_invite", [
             'clan' => $clan->getName(),
             'inviter' => $inviter->getName()
@@ -144,8 +144,8 @@ class ClanManager {
             return false;
         }
         $this->plugin->getDatabase()->updateClanTag($clan->getName(), $tag, $color);
-        $clan->tag = $tag;
-        $clan->tagColor = $color;
+        $clan->setTag($tag);
+        $clan->setTagColor($color);
         return true;
     }
 
@@ -154,7 +154,7 @@ class ClanManager {
             return false;
         }
         $this->plugin->getDatabase()->updateClanDescription($clan->getName(), $desc);
-        $clan->description = $desc;
+        $clan->setDescription($desc);
         return true;
     }
 
@@ -171,7 +171,11 @@ class ClanManager {
     }
 
     public function getTopClans(int $limit = 10): array {
-        return $this->plugin->getDatabase()->getAllClans();
+        $clans = $this->plugin->getDatabase()->getAllClans();
+        usort($clans, function($a, $b) {
+            return $b['kills'] <=> $a['kills'];
+        });
+        return array_slice($clans, 0, $limit);
     }
 
     public function getTopPlayers(int $limit = 10): array {
