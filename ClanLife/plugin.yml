@@ -2,27 +2,26 @@ name: ClanPlugin
 main: ClanPlugin\Main
 version: 1.0.0
 api: 5.0.0
-author: SeuNome 
-description: Sistema
-completo de Clans
-Com UI, leade
+author: SeuNome
+description: Sistema completo de Clans com UI, leaderboard e gerenciamento
+
 permissions:
-clanplugin.use:
-description: Permite usar /clar
-default: true
-clanplugin.admin:
-Permite
-administrar
-description: 
-default: op 
-clanplugin.leaderboard.create: 
-description: Permite criar textos clans flutuantes de
-default: op
-commands :
-clan:
-description: "Sistema usage: "/clan"
-de Clãs"
-aliases: "c"1
-lftops :
-description: "Receber item de leaderboard usage :/lftops" 
-permission: clanplugin.leaderboard.create
+  clanplugin.use:
+    description: Permite usar /clan
+    default: true
+  clanplugin.admin:
+    description: Permite administrar clãs
+    default: op
+  clanplugin.leaderboard.create:
+    description: Permite criar textos clans flutuantes de leaderboard
+    default: op
+
+commands:
+  clan:
+    description: "Sistema de Clãs"
+    usage: "/clan"
+    aliases: ["c"]
+  lftops:
+    description: "Receber item de leaderboard"
+    usage: "/lftops"
+    permission: clanplugin.leaderboard.create
