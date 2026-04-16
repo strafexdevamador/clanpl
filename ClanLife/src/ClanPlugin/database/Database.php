@@ -64,162 +64,281 @@ class Database {
 
     // Clan methods
     public function createClan(string $name, string $tag, string $tagColor, string $leader): bool {
-        $stmt = $this->db->prepare("INSERT INTO clans (name, tag, tagColor, leader, created_at) VALUES (:name, :tag, :tagColor, :leader, :created)");
-        $stmt->bindValue(":name", $name, SQLITE3_TEXT);
-        $stmt->bindValue(":tag", $tag, SQLITE3_TEXT);
-        $stmt->bindValue(":tagColor", $tagColor, SQLITE3_TEXT);
-        $stmt->bindValue(":leader", $leader, SQLITE3_TEXT);
-        $stmt->bindValue(":created", time(), SQLITE3_INTEGER);
-        return $stmt->execute() instanceof SQLite3Result;
+        try {
+            $stmt = $this->db->prepare("INSERT INTO clans (name, tag, tagColor, leader, created_at) VALUES (:name, :tag, :tagColor, :leader, :created)");
+            $stmt->bindValue(":name", $name, SQLITE3_TEXT);
+            $stmt->bindValue(":tag", $tag, SQLITE3_TEXT);
+            $stmt->bindValue(":tagColor", $tagColor, SQLITE3_TEXT);
+            $stmt->bindValue(":leader", $leader, SQLITE3_TEXT);
+            $stmt->bindValue(":created", time(), SQLITE3_INTEGER);
+            return $stmt->execute() instanceof \SQLite3Result;
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao criar clã: " . $e->getMessage());
+            return false;
+        }
     }
 
     public function deleteClan(string $clanName): bool {
-        $this->db->exec("DELETE FROM clans WHERE name = '$clanName'");
-        $this->db->exec("UPDATE players SET clan = NULL, rank = NULL WHERE clan = '$clanName'");
-        $this->db->exec("DELETE FROM messages WHERE clan = '$clanName'");
-        return true;
+        try {
+            $clanName = SQLite3::escapeString($clanName);
+            $this->db->exec("DELETE FROM clans WHERE name = '$clanName'");
+            $this->db->exec("UPDATE players SET clan = NULL, rank = NULL WHERE clan = '$clanName'");
+            return true;
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao deletar clã: " . $e->getMessage());
+            return false;
+        }
     }
 
     public function getClan(string $clanName): ?array {
-        $result = $this->db->query("SELECT * FROM clans WHERE name = '$clanName'");
-        $data = $result->fetchArray(SQLITE3_ASSOC);
-        return $data ?: null;
+        try {
+            $clanName = SQLite3::escapeString($clanName);
+            $result = $this->db->query("SELECT * FROM clans WHERE name = '$clanName'");
+            return $result->fetchArray(SQLITE3_ASSOC) ?: null;
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao buscar clã: " . $e->getMessage());
+            return null;
+        }
     }
 
     public function getAllClans(): array {
-        $result = $this->db->query("SELECT * FROM clans ORDER BY kills DESC");
-        $clans = [];
-        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-            $clans[] = $row;
+        try {
+            $result = $this->db->query("SELECT * FROM clans ORDER BY kills DESC");
+            $clans = [];
+            while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+                $clans[] = $row;
+            }
+            return $clans;
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao buscar clãs: " . $e->getMessage());
+            return [];
         }
-        return $clans;
     }
 
     public function updateClanKills(string $clanName, int $kills): void {
-        $this->db->exec("UPDATE clans SET kills = $kills WHERE name = '$clanName'");
+        try {
+            $clanName = SQLite3::escapeString($clanName);
+            $this->db->exec("UPDATE clans SET kills = $kills WHERE name = '$clanName'");
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao atualizar kills: " . $e->getMessage());
+        }
     }
 
     public function updateClanLevel(string $clanName, int $level): void {
-        $this->db->exec("UPDATE clans SET level = $level WHERE name = '$clanName'");
+        try {
+            $clanName = SQLite3::escapeString($clanName);
+            $this->db->exec("UPDATE clans SET level = $level WHERE name = '$clanName'");
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao atualizar level: " . $e->getMessage());
+        }
     }
 
     public function updateClanDescription(string $clanName, string $desc): void {
-        $desc = SQLite3::escapeString($desc);
-        $this->db->exec("UPDATE clans SET description = '$desc' WHERE name = '$clanName'");
+        try {
+            $clanName = SQLite3::escapeString($clanName);
+            $desc = SQLite3::escapeString($desc);
+            $this->db->exec("UPDATE clans SET description = '$desc' WHERE name = '$clanName'");
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao atualizar descrição: " . $e->getMessage());
+        }
     }
 
     public function updateClanTag(string $clanName, string $tag, string $color): void {
-        $this->db->exec("UPDATE clans SET tag = '$tag', tagColor = '$color' WHERE name = '$clanName'");
+        try {
+            $clanName = SQLite3::escapeString($clanName);
+            $tag = SQLite3::escapeString($tag);
+            $color = SQLite3::escapeString($color);
+            $this->db->exec("UPDATE clans SET tag = '$tag', tagColor = '$color' WHERE name = '$clanName'");
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao atualizar tag: " . $e->getMessage());
+        }
     }
 
     // Player methods
     public function addPlayerToClan(string $player, string $clan, string $rank): bool {
-        $stmt = $this->db->prepare("INSERT OR REPLACE INTO players (player, clan, rank, joined_at) VALUES (:player, :clan, :rank, :joined)");
-        $stmt->bindValue(":player", $player, SQLITE3_TEXT);
-        $stmt->bindValue(":clan", $clan, SQLITE3_TEXT);
-        $stmt->bindValue(":rank", $rank, SQLITE3_TEXT);
-        $stmt->bindValue(":joined", time(), SQLITE3_INTEGER);
-        return $stmt->execute() instanceof SQLite3Result;
+        try {
+            $stmt = $this->db->prepare("INSERT OR REPLACE INTO players (player, clan, rank, joined_at) VALUES (:player, :clan, :rank, :joined)");
+            $stmt->bindValue(":player", $player, SQLITE3_TEXT);
+            $stmt->bindValue(":clan", $clan, SQLITE3_TEXT);
+            $stmt->bindValue(":rank", $rank, SQLITE3_TEXT);
+            $stmt->bindValue(":joined", time(), SQLITE3_INTEGER);
+            return $stmt->execute() instanceof \SQLite3Result;
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao adicionar player ao clã: " . $e->getMessage());
+            return false;
+        }
     }
 
     public function removePlayerFromClan(string $player): void {
-        $this->db->exec("UPDATE players SET clan = NULL, rank = NULL WHERE player = '$player'");
+        try {
+            $player = SQLite3::escapeString($player);
+            $this->db->exec("UPDATE players SET clan = NULL, rank = NULL WHERE player = '$player'");
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao remover player do clã: " . $e->getMessage());
+        }
     }
 
     public function getPlayerClan(string $player): ?array {
-        $result = $this->db->query("SELECT * FROM players WHERE player = '$player'");
-        $data = $result->fetchArray(SQLITE3_ASSOC);
-        return $data ?: null;
+        try {
+            $player = SQLite3::escapeString($player);
+            $result = $this->db->query("SELECT * FROM players WHERE player = '$player'");
+            return $result->fetchArray(SQLITE3_ASSOC) ?: null;
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao buscar clã do player: " . $e->getMessage());
+            return null;
+        }
     }
 
     public function getClanMembers(string $clanName): array {
-        $result = $this->db->query("SELECT * FROM players WHERE clan = '$clanName' ORDER BY 
-            CASE rank 
-                WHEN 'leader' THEN 1 
-                WHEN 'subleader' THEN 2 
-                WHEN 'elite' THEN 3 
-                ELSE 4 
-            END, kills DESC");
-        $members = [];
-        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-            $members[] = $row;
+        try {
+            $clanName = SQLite3::escapeString($clanName);
+            $result = $this->db->query("SELECT * FROM players WHERE clan = '$clanName' ORDER BY 
+                CASE rank 
+                    WHEN 'leader' THEN 1 
+                    WHEN 'subleader' THEN 2 
+                    WHEN 'moderator' THEN 3
+                    WHEN 'elite' THEN 4
+                    ELSE 5 
+                END, kills DESC");
+            $members = [];
+            while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+                $members[] = $row;
+            }
+            return $members;
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao buscar membros: " . $e->getMessage());
+            return [];
         }
-        return $members;
     }
 
     public function updatePlayerRank(string $player, string $rank): void {
-        $this->db->exec("UPDATE players SET rank = '$rank' WHERE player = '$player'");
+        try {
+            $player = SQLite3::escapeString($player);
+            $rank = SQLite3::escapeString($rank);
+            $this->db->exec("UPDATE players SET rank = '$rank' WHERE player = '$player'");
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao atualizar rank: " . $e->getMessage());
+        }
     }
 
     public function updatePlayerKills(string $player, int $kills): void {
-        $this->db->exec("UPDATE players SET kills = $kills WHERE player = '$player'");
+        try {
+            $player = SQLite3::escapeString($player);
+            $this->db->exec("UPDATE players SET kills = $kills WHERE player = '$player'");
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao atualizar kills do player: " . $e->getMessage());
+        }
     }
 
     public function getTopPlayersByKills(int $limit = 10): array {
-        $result = $this->db->query("SELECT player, kills FROM players ORDER BY kills DESC LIMIT $limit");
-        $players = [];
-        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-            $players[] = $row;
+        try {
+            $result = $this->db->query("SELECT player, kills FROM players ORDER BY kills DESC LIMIT $limit");
+            $players = [];
+            while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+                $players[] = $row;
+            }
+            return $players;
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao buscar top players: " . $e->getMessage());
+            return [];
         }
-        return $players;
     }
 
-    // Messages methods
-    
     // Invites methods
     public function addInvite(string $clan, string $player, string $invitedBy): void {
-        $stmt = $this->db->prepare("INSERT INTO invites (clan, player, invited_by, timestamp) VALUES (:clan, :player, :invitedBy, :time)");
-        $stmt->bindValue(":clan", $clan, SQLITE3_TEXT);
-        $stmt->bindValue(":player", $player, SQLITE3_TEXT);
-        $stmt->bindValue(":invitedBy", $invitedBy, SQLITE3_TEXT);
-        $stmt->bindValue(":time", time(), SQLITE3_INTEGER);
-        $stmt->execute();
+        try {
+            $stmt = $this->db->prepare("INSERT INTO invites (clan, player, invited_by, timestamp) VALUES (:clan, :player, :invitedBy, :time)");
+            $stmt->bindValue(":clan", $clan, SQLITE3_TEXT);
+            $stmt->bindValue(":player", $player, SQLITE3_TEXT);
+            $stmt->bindValue(":invitedBy", $invitedBy, SQLITE3_TEXT);
+            $stmt->bindValue(":time", time(), SQLITE3_INTEGER);
+            $stmt->execute();
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao adicionar convite: " . $e->getMessage());
+        }
     }
 
     public function getInvite(string $player, string $clan): ?array {
-        $result = $this->db->query("SELECT * FROM invites WHERE player = '$player' AND clan = '$clan'");
-        $data = $result->fetchArray(SQLITE3_ASSOC);
-        return $data ?: null;
+        try {
+            $player = SQLite3::escapeString($player);
+            $clan = SQLite3::escapeString($clan);
+            $result = $this->db->query("SELECT * FROM invites WHERE player = '$player' AND clan = '$clan'");
+            return $result->fetchArray(SQLITE3_ASSOC) ?: null;
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao buscar convite: " . $e->getMessage());
+            return null;
+        }
     }
 
     public function getInvitesForPlayer(string $player): array {
-        $result = $this->db->query("SELECT * FROM invites WHERE player = '$player'");
-        $invites = [];
-        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-            $invites[] = $row;
+        try {
+            $player = SQLite3::escapeString($player);
+            $result = $this->db->query("SELECT * FROM invites WHERE player = '$player'");
+            $invites = [];
+            while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+                $invites[] = $row;
+            }
+            return $invites;
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao buscar convites: " . $e->getMessage());
+            return [];
         }
-        return $invites;
     }
 
     public function removeInvite(string $player, string $clan): void {
-        $this->db->exec("DELETE FROM invites WHERE player = '$player' AND clan = '$clan'");
+        try {
+            $player = SQLite3::escapeString($player);
+            $clan = SQLite3::escapeString($clan);
+            $this->db->exec("DELETE FROM invites WHERE player = '$player' AND clan = '$clan'");
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao remover convite: " . $e->getMessage());
+        }
     }
 
     // Notifications methods
     public function addNotification(string $player, string $type, array $data): void {
-        $stmt = $this->db->prepare("INSERT INTO notifications (player, type, data, timestamp) VALUES (:player, :type, :data, :time)");
-        $stmt->bindValue(":player", $player, SQLITE3_TEXT);
-        $stmt->bindValue(":type", $type, SQLITE3_TEXT);
-        $stmt->bindValue(":data", json_encode($data), SQLITE3_TEXT);
-        $stmt->bindValue(":time", time(), SQLITE3_INTEGER);
-        $stmt->execute();
+        try {
+            $stmt = $this->db->prepare("INSERT INTO notifications (player, type, data, timestamp) VALUES (:player, :type, :data, :time)");
+            $stmt->bindValue(":player", $player, SQLITE3_TEXT);
+            $stmt->bindValue(":type", $type, SQLITE3_TEXT);
+            $stmt->bindValue(":data", json_encode($data), SQLITE3_TEXT);
+            $stmt->bindValue(":time", time(), SQLITE3_INTEGER);
+            $stmt->execute();
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao adicionar notificação: " . $e->getMessage());
+        }
     }
 
     public function getNotifications(string $player): array {
-        $result = $this->db->query("SELECT * FROM notifications WHERE player = '$player' AND seen = 0 ORDER BY timestamp DESC");
-        $notifications = [];
-        while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
-            $row['data'] = json_decode($row['data'], true);
-            $notifications[] = $row;
+        try {
+            $player = SQLite3::escapeString($player);
+            $result = $this->db->query("SELECT * FROM notifications WHERE player = '$player' AND seen = 0 ORDER BY timestamp DESC");
+            $notifications = [];
+            while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
+                $row['data'] = json_decode($row['data'], true);
+                $notifications[] = $row;
+            }
+            return $notifications;
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao buscar notificações: " . $e->getMessage());
+            return [];
         }
-        return $notifications;
     }
 
     public function markNotificationSeen(int $id): void {
-        $this->db->exec("UPDATE notifications SET seen = 1 WHERE id = $id");
+        try {
+            $this->db->exec("UPDATE notifications SET seen = 1 WHERE id = $id");
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao marcar notificação como vista: " . $e->getMessage());
+        }
     }
 
     public function clearNotifications(string $player): void {
-        $this->db->exec("DELETE FROM notifications WHERE player = '$player'");
+        try {
+            $player = SQLite3::escapeString($player);
+            $this->db->exec("DELETE FROM notifications WHERE player = '$player'");
+        } catch (\Exception $e) {
+            $this->plugin->getLogger()->error("Erro ao limpar notificações: " . $e->getMessage());
+        }
     }
 }
